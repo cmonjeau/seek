@@ -67,6 +67,8 @@
 
     <%= render :partial => "admin/zenodo_settings" %>
 
+    <%= render :partial => 'admin/ldap'  %>
+
     <%= admin_checkbox_setting(:openbis_enabled, 1, Seek::Config.openbis_enabled,
                                "openBIS enabled", "Whether support for a #{t('project')} to connect to openBIS is enabled.") %>
 

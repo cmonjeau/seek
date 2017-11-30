@@ -34,7 +34,8 @@ SEEK::Application.routes.draw do
       post :restart_delayed_job
       post :update_admins
       post :update_rebrand
-      post :test_email_configuration
+      post :test_email_configuration      
+      post :test_ldap_connection
       post :update_settings
       post :update_features_enabled
       post :update_pagination

@@ -19,6 +19,7 @@ registration_disabled_description:
 activation_required_enabled:
 project_name:
 smtp:
+ldap:
 default_pages:
 project_type:
 project_link:
@@ -64,6 +65,7 @@ publications_enabled:
 forum_enabled:
 jerm_enabled:
 email_enabled:
+ldap_enabled:
 jws_enabled:
 external_search_enabled:
 piwik_analytics_enabled:
