@@ -36,6 +36,7 @@ SEEK::Application.routes.draw do
       post :update_rebrand
       post :test_email_configuration
       post :update_settings
+      post :test_ldap_connection
       post :update_features_enabled
       post :update_pagination
       post :delete_tag

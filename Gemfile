@@ -176,3 +176,5 @@ group :test, :development do
   gem 'teaspoon'
   gem 'teaspoon-mocha'
 end
+
+gem 'net-ldap'
