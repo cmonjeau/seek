@@ -1,4 +1,4 @@
-# This controller handles the login/logout function of the site.  
+# This controller handles the login/logout function of the site.
 class SessionsController < ApplicationController
 
   before_filter :redirect_to_sign_up_when_no_user,:only=>:new
@@ -10,7 +10,7 @@ class SessionsController < ApplicationController
 
   # render new.html.erb
   def new
-    
+
   end
 
   def index
@@ -50,10 +50,13 @@ class SessionsController < ApplicationController
   def password_authentication
     if @user = User.authenticate(params[:login], params[:password])
       check_login
+    elsif Seek::Config.ldap_enabled
+       authenticate_ldap(params[:login], params[:password])
     else
       failed_login "Invalid username/password. Have you <b> #{view_context.link_to "forgotten your password?", main_app.forgot_password_url }</b>".html_safe
-    end  
+    end
   end
+
 
   private
 
@@ -68,7 +71,7 @@ class SessionsController < ApplicationController
       successful_login
     end
   end
-  
+
   def successful_login
     self.current_user = @user
     flash[:notice] = "You have successfully logged in, #{@user.display_name}."
@@ -104,6 +107,54 @@ class SessionsController < ApplicationController
     URI.parse(return_to_url).path rescue root_path
   end
 
+
+  def authenticate_ldap(login, password)
+
+    begin
+      # create connection
+      ldap = Net::LDAP.new :host => Seek::Config.ldap[:ldap_address], :port => Seek::Config.ldap[:ldap_port], :base => Seek::Config.ldap[:ldap_base_dn]
+
+      #if !Seek::Config.ldap[:ldap_bind_dn].blank? && !Seek::Config.ldap[:ldap_bind_password].blank?
+      ldap.auth Seek::Config.ldap[:ldap_bind_dn], Seek::Config.ldap[:ldap_bind_password]
+      #end
+
+     #  ldap.auth login, password
+
+      result = ldap.bind_as(
+        :base => Seek::Config.ldap[:ldap_base_dn],
+        :filter => "(#{Seek::Config.ldap[:ldap_login]}=#{login})",
+        :password => password
+      )
+
+      # create user if there is an entry
+      if result
+
+        # extract user informations
+        ldap_user = result.first
+        ldap_email = ldap_user[Seek::Config.ldap[:ldap_email]].first
+        ldap_fist_name = ldap_user[Seek::Config.ldap[:ldap_first_name]].first
+        ldap_last_name = ldap_user[Seek::Config.ldap[:ldap_last_name]].first
+
+        # create user
+        @user = User.create({ :login => login, :password => password, :password_confirmation => password, :email => ldap_email })
+
+        if !@user.save
+           failed_login "Cannot create a new user: #{login}"
+        else
+          self.current_user = @user
+          # redirect to people creation using LDAP informations
+          redirect_to(register_people_path({:email => ldap_email, :first_name => ldap_fist_name, :last_name => ldap_last_name}))
+        end
+      else
+        failed_login "Invalid username/password using local and LDAP database. Have you <b> #{view_context.link_to "forgotten your password?", main_app.forgot_password_url }</b>".html_safe
+      end
+
+    rescue => e
+        failed_login "Connection to LDAP failed, #{e.message}"
+    end
+
+  end
+
   def failed_login(message)
     logout_user
     flash[:error] = message
@@ -119,7 +170,7 @@ class SessionsController < ApplicationController
 
     # info contains username, first_ and last_name and email
     info = auth['info']
-    
+
     # check if there is a user with that username as login
     user_by_omniauth = User.find_by_login( info['nickname'])
     if user_by_omniauth
