@@ -17,6 +17,7 @@ activation_required_enabled:
 project_name:
 smtp:
   encrypt: true
+ldap:
 default_pages:
 project_type:
 project_link:
@@ -61,6 +62,7 @@ assays_enabled:
 publications_enabled:
 jerm_enabled:
 email_enabled:
+ldap_enabled:
 jws_enabled:
 external_search_enabled:
 piwik_analytics_enabled:
