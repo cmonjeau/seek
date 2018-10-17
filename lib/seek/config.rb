@@ -227,6 +227,16 @@ module Seek
       value
     end
 
+    def ldap_settings(field)
+      value = ldap[field.to_sym]
+      value
+    end
+
+    def set_ldap_settings(field, value)
+      merge! :ldap, field => value
+      value
+    end
+
     def facet_enable_for_page(controller)
       facet_enable_for_pages.with_indifferent_access[controller.to_s]
     end
