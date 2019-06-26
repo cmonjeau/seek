@@ -9,9 +9,7 @@ class SessionsController < ApplicationController
   prepend_before_filter :strip_root_for_xml_requests
 
   # render new.html.erb
-  def new
-
-  end
+  def new; end
 
   def index
     redirect_to root_path
@@ -51,12 +49,11 @@ class SessionsController < ApplicationController
     if @user = User.authenticate(params[:login], params[:password])
       check_login
     elsif Seek::Config.ldap_enabled
-       authenticate_ldap(params[:login], params[:password])
+      authenticate_ldap(params[:login], params[:password])
     else
       failed_login "Invalid username/password. Have you <b> #{view_context.link_to "forgotten your password?", main_app.forgot_password_url }</b>".html_safe
     end
   end
-
 
   private
 
@@ -107,7 +104,6 @@ class SessionsController < ApplicationController
     URI.parse(return_to_url).path rescue root_path
   end
 
-
   def authenticate_ldap(login, password)
 
     begin
@@ -135,10 +131,27 @@ class SessionsController < ApplicationController
         ldap_fist_name = ldap_user[Seek::Config.ldap[:ldap_first_name]].first
         ldap_last_name = ldap_user[Seek::Config.ldap[:ldap_last_name]].first
 
+
+        user_by_ldap = User.find_by_login(login)
+        if user_by_ldap
+            user_by_ldap.email = ldap_email
+            @user = user_by_ldap
+            logger.info "update email"
+            if !@user.save!
+                failed_login "Failed to update ldap information"
+            end
+            check_login
+            return
+        end
+
+        # create user
+	      range = [*'0'..'9',*'A'..'Z',*'a'..'z']
+	      fake_password = (0...10).map{ range.sample }.join
+
         # create user
         @user = User.create({ :login => login, :password => password, :password_confirmation => password, :email => ldap_email })
 
-        if !@user.save
+        if !@user.save!
            failed_login "Cannot create a new user: #{login}"
         else
           self.current_user = @user
